@@ -11,7 +11,7 @@ def __verify_ignore(content):
 
 def __extract_types(sql):
     types = []
-    sql_upper = sql.upper()
+    sql_upper = sql.upper().replace("\n", "")
 
     if "INSERT INTO" in sql_upper:
         if re.search(r'VALUES\s*\([^\\)]+\)\s*,\s*\(', sql_upper):
@@ -20,7 +20,10 @@ def __extract_types(sql):
             types.append("INSERT")
 
     if "DELETE FROM" in sql_upper:
-        types.append("DELETE")
+        if "ALTER SEQUENCE" in sql_upper:
+            types.append("DELETE_ALL")
+        else:
+            types.append("DELETE")
 
     if "SELECT" in sql_upper:
         types.append("SELECT")
@@ -40,7 +43,52 @@ def __format(sql):
     if types[0] == "INSERT":
         return True, __format_insert(sql)
 
+    if types[0] == "DELETE":
+        return True, __format_delete(sql)
+
     return False, None
+
+
+def __format_delete(sql):
+    sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
+    sql = sql.replace("\n", " ").strip().rstrip(";")
+    sql = sql.replace("DELETE FROM", "").strip()
+
+    if " WHERE " in sql:
+        parts = sql.split(" WHERE ")
+        name = parts[0]
+        where = parts[1]
+        parts = where.split(" AND ")
+        where = ""
+        for part in parts:
+            part = part.strip()
+            custom = part.split("=")
+            column_name = custom[0]
+            if "." in column_name:
+                column_name = column_name.split(".")
+                column_name = column_name[0] + "." + "".join(column_name[1:])
+            else:
+                column_name = column_name.lower()
+
+            part = column_name + "=" + "".join(custom[1:])
+            where += f"    {part} AND\n"
+        where = where[0:len(where) - 5]
+
+        where = f"\nWHERE\n{where}"
+    else:
+        where = ""
+        name = sql
+
+    if " " in name:
+        parts = name.split(" ")
+        name = parts[0].lower() + " "
+        name += " ".join(parts[1:])
+    else:
+        name = name.lower()
+
+    sql = f"DELETE FROM\n    {name}{where}"
+
+    return sql
 
 
 def __format_insert(sql):
