@@ -145,14 +145,25 @@ def __verify_regexs(data, regex_to_ignore):
     return False
 
 
+def __read_sql(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as data:
+            return data.read()
+    except UnicodeDecodeError:
+        print(f"Ignorando arquivo {path}: conteudo nao esta em UTF-8")
+        return None
+
+
 def verify(path, regex_to_ignore):
     print(f"Verificando arquivo {path}")
 
     if __verify_regexs(path, regex_to_ignore):
         return False, None
 
-    with open(path, 'r', encoding='utf-8') as data:
-        original = data.read()
+    original = __read_sql(path)
+
+    if original is None:
+        return False, None
 
     if __verify_ignore(original):
         return False, None
@@ -185,8 +196,10 @@ def review(config):
 
         path = os.path.join(path_source, new_path)
 
-        with open(path, 'r', encoding='utf-8') as data:
-            original = data.read()
+        original = __read_sql(path)
+
+        if original is None:
+            continue
 
         if __verify_ignore(original):
             continue
