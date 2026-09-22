@@ -2,3 +2,4 @@ config.json
 output.json
 **__pycache__**
 .idea
+tests/output/

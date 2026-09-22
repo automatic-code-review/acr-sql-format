@@ -62,15 +62,30 @@ def __format_delete(sql):
         where = ""
         for part in parts:
             part = part.strip()
-            custom = part.split("=")
-            column_name = custom[0]
-            if "." in column_name:
-                column_name = column_name.split(".")
-                column_name = column_name[0] + "." + "".join(column_name[1:])
-            else:
-                column_name = column_name.lower()
 
-            part = column_name + "=" + "".join(custom[1:])
+            if " IN " in part:
+                column_name, in_clause = part.split(" IN ", 1)
+                in_clause = in_clause.strip()
+                in_clause = re.sub(r"^\(\s*", "( ", in_clause)
+                in_clause = re.sub(r"\s*\)$", " )", in_clause)
+                if "." in column_name:
+                    column_name = column_name.split(".")
+                    column_name = column_name[0] + "." + "".join(column_name[1:])
+                else:
+                    column_name = column_name.lower()
+
+                part = f"{column_name} IN {in_clause}"
+            else:
+                custom = part.split("=")
+                column_name = custom[0]
+                if "." in column_name:
+                    column_name = column_name.split(".")
+                    column_name = column_name[0] + "." + "".join(column_name[1:])
+                else:
+                    column_name = column_name.lower()
+
+                part = column_name + "=" + "".join(custom[1:])
+
             where += f"    {part} AND\n"
         where = where[0:len(where) - 5]
 
