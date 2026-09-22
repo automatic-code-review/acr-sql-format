@@ -17,3 +17,14 @@ Arquivo config.json
   }
 }
 ```
+
+## Testes
+
+Instale as dependências e rode os testes unitários com pytest:
+
+```bash
+pip install -r requirements.txt
+pip install pytest
+python3 -m pytest tests/ -v
+```
+
