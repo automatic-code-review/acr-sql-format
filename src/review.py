@@ -4,6 +4,17 @@ import re
 import automatic_code_review_commons as commons
 import sqlparse
 
+DDL_KEYWORDS = [
+    "CREATE TABLE",
+    "DROP TABLE",
+    "ALTER TABLE",
+    "ALTER COLUMN",
+    "ADD COLUMN",
+    "DROP COLUMN",
+    "CREATE INDEX",
+    "DROP INDEX",
+]
+
 
 def __verify_ignore(content):
     return "acr-skip { acr-sql-format }" in content
@@ -12,6 +23,9 @@ def __verify_ignore(content):
 def __extract_types(sql):
     types = []
     sql_upper = sql.upper().replace("\n", "")
+
+    if any(keyword in sql_upper for keyword in DDL_KEYWORDS):
+        types.append("DDL")
 
     if "INSERT INTO" in sql_upper:
         if re.search(r"VALUES\s*\([^\\)]+\)\s*,\s*\(", sql_upper):
