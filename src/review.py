@@ -14,7 +14,7 @@ def __extract_types(sql):
     sql_upper = sql.upper().replace("\n", "")
 
     if "INSERT INTO" in sql_upper:
-        if re.search(r'VALUES\s*\([^\\)]+\)\s*,\s*\(', sql_upper):
+        if re.search(r"VALUES\s*\([^\\)]+\)\s*,\s*\(", sql_upper):
             types.append("INSERT_MULTI")
         else:
             types.append("INSERT")
@@ -50,7 +50,7 @@ def __format(sql):
 
 
 def __format_delete(sql):
-    sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
+    sql = sqlparse.format(sql, reindent=True, keyword_case="upper")
     sql = sql.replace("\n", " ").strip().rstrip(";")
     sql = sql.replace("DELETE FROM", "").strip()
 
@@ -87,7 +87,7 @@ def __format_delete(sql):
                 part = column_name + "=" + "".join(custom[1:])
 
             where += f"    {part} AND\n"
-        where = where[0:len(where) - 5]
+        where = where[0 : len(where) - 5]
 
         where = f"\nWHERE\n{where}"
     else:
@@ -121,13 +121,13 @@ def __format_insert(sql):
 
         return formatted_query
 
-    sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
+    sql = sqlparse.format(sql, reindent=True, keyword_case="upper")
 
     formatted = re.sub(
         r"(INSERT INTO [\w\\.]+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\);?",
         format_single_insert,
         sql.strip(),
-        flags=re.MULTILINE | re.IGNORECASE
+        flags=re.MULTILINE | re.IGNORECASE,
     )
 
     return formatted
@@ -138,7 +138,7 @@ def __standardize(sql):
         return sql
 
     while sql.endswith("\n"):
-        sql = sql[0:len(sql) - 1]
+        sql = sql[0 : len(sql) - 1]
 
     if not sql.endswith(";"):
         sql += ";"
@@ -162,7 +162,7 @@ def __verify_regexs(data, regex_to_ignore):
 
 def __read_sql(path):
     try:
-        with open(path, 'r', encoding='utf-8') as data:
+        with open(path, "r", encoding="utf-8") as data:
             return data.read()
     except UnicodeDecodeError:
         print(f"Ignorando arquivo {path}: conteudo nao esta em UTF-8")
@@ -194,17 +194,17 @@ def verify(path, regex_to_ignore):
 
 
 def review(config):
-    path_source = config['path_source']
-    changes = config['merge']['changes']
-    comment_description_pattern = config['message']
+    path_source = config["path_source"]
+    changes = config["merge"]["changes"]
+    comment_description_pattern = config["message"]
 
     comments = []
 
     for change in changes:
-        if change['deleted_file']:
+        if change["deleted_file"]:
             continue
 
-        new_path = change['new_path']
+        new_path = change["new_path"]
 
         if not new_path.endswith(".sql"):
             continue
@@ -233,16 +233,20 @@ def review(config):
         comment_path = new_path
         comment_description = f"{comment_description_pattern}"
         comment_description = comment_description.replace("${FILE_PATH}", comment_path)
-        comment_description = comment_description.replace("${FORMATTED}", __formatted_to_string(formatted.split('\n')))
+        comment_description = comment_description.replace(
+            "${FORMATTED}", __formatted_to_string(formatted.split("\n"))
+        )
 
-        comments.append(commons.comment_create(
-            comment_id=commons.comment_generate_id(comment_description),
-            comment_path=comment_path,
-            comment_description=comment_description,
-            comment_snipset=False,
-            comment_end_line=1,
-            comment_start_line=1,
-            comment_language="sql",
-        ))
+        comments.append(
+            commons.comment_create(
+                comment_id=commons.comment_generate_id(comment_description),
+                comment_path=comment_path,
+                comment_description=comment_description,
+                comment_snipset=False,
+                comment_end_line=1,
+                comment_start_line=1,
+                comment_language="sql",
+            )
+        )
 
     return comments
