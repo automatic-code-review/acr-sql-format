@@ -50,3 +50,24 @@ def test_format_delete_multiple_in_clauses_with_and(tmp_path):
 
     assert changed is True
     assert formatted == expected
+
+
+def test_review_goose_migration_with_create_and_drop_table_does_not_comment(tmp_path):
+    sql = __read_fixture("goose_create_insert_input.sql")
+
+    path = tmp_path / "goose_create_insert.sql"
+    path.write_text(sql, encoding="utf-8")
+
+    config = {
+        "path_source": str(tmp_path),
+        "message": "${FILE_PATH} ${FORMATTED}",
+        "merge": {
+            "changes": [
+                {"deleted_file": False, "new_path": "goose_create_insert.sql"},
+            ],
+        },
+    }
+
+    comments = review.review(config)
+
+    assert comments == []
